@@ -49,6 +49,10 @@ button {
   transition: all var(--transition-time);
 }
 
+.btn:hover {
+  cursor: pointer;
+}
+
 .btn:active {
   transform: scale(0.98);
 }
@@ -131,11 +135,6 @@ main .container {
 .input-container .cancel .fa-circle-xmark {
   font-size: 1.5rem;
   border-radius: 50%;
-  transition: all var(--transition-time);
-}
-
-.input-container .cancel .fa-circle-xmark:active {
-  transform: scale(0.98);
 }
 
 .input-container > div:nth-of-type(n):not(:first-child) div[class$="grp"] {
@@ -310,6 +309,26 @@ main .not-tracking-status .btn-get-started:hover {
 .attendance-grid > [class^="subject"] .percentage .num-percentage {
   font-size: 1.5rem;
   font-family: "Roboto Mono", monospace;
+}
+
+.clear-subjects {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  display: none;
+  place-items: center;
+  width: 100%;
+  padding: 1rem;
+  border-top: 1px solid var(--distinguishing-black);
+}
+
+.clear-subjects > button.btn {
+  padding: 0.75rem 1rem;
+  border-color: var(--accent-red);
+}
+
+.clear-subjects > button.btn:hover {
+  background-color: var(--accent-red);
 }
 
 /* MEDIA QUERY FOR TABLETS */

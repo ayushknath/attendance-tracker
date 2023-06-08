@@ -1,218 +1,320 @@
 const notTrackingStatus = document.querySelector(".not-tracking-status");
 const getStartedBtn = document.querySelector(".btn-get-started");
 const main = document.querySelector("main");
+const clearSubjectsBtn = document.querySelector(".clear-subjects");
+const attendanceArr = localStorage.getItem("attendance")
+  ? JSON.parse(localStorage.getItem("attendance"))
+  : [];
+
+if (attendanceArr.length > 0) {
+  notTrackingStatus.style.display = "none";
+
+  // SET SUBJECTS
+  document
+    .querySelector("main .container")
+    .insertAdjacentHTML("beforeend", '<div class="attendance-grid"></div>');
+
+  for (let i = 1; i <= attendanceArr[0]; i++) {
+    const subject = `
+    <div class="subject-${i}">
+        <div class="details">
+            <h3 class="subject-name"></h3>
+            <div class="data-showcase">
+                <p class="attended"></p>
+                <p class="total"></p>
+            </div>
+        </div>
+
+        <div class="percentage">
+            <p class="num-percentage"></p>
+        </div>
+    </div>
+    `;
+
+    document
+      .querySelector(".attendance-grid")
+      .insertAdjacentHTML("beforeend", subject);
+
+    document
+      .querySelector(`.subject-${i}`)
+      .addEventListener("click", editAttendance);
+  }
+
+  clearSubjectsBtn.style.display = "grid";
+  clearSubjectsBtn.addEventListener("click", clearSubjects);
+
+  const subjects = Array.from(
+    document.querySelector(".attendance-grid").children
+  );
+  subjects.forEach((subject, index) => {
+    const subjectNameElement = subject.children[0].children[0];
+    const attendedElement = subject.children[0].children[1].children[0];
+    const totalElement = subject.children[0].children[1].children[1];
+    const percentElement = subject.children[1].children[0];
+
+    subjectNameElement.textContent = attendanceArr[index + 1].subjectName;
+
+    attendedElement.innerHTML = `Classes attended: <span>${
+      attendanceArr[index + 1].attendedClasses
+    }</span>`;
+
+    totalElement.innerHTML = `Total classes: <span>${
+      attendanceArr[index + 1].totalClasses
+    }</span>`;
+
+    percentElement.textContent = `${attendanceArr[index + 1].percentage}%`;
+
+    if (attendanceArr[index + 1].percentage >= 75) {
+      percentElement.classList.remove("inadequate");
+      percentElement.classList.add("adequate");
+    } else {
+      percentElement.classList.remove("adequate");
+      percentElement.classList.add("inadequate");
+    }
+  });
+} else {
+  notTrackingStatus.style.display = "flex";
+
+  clearSubjectsBtn.style.display = "none";
+  clearSubjectsBtn.removeEventListener("click", clearSubjects);
+}
 
 getStartedBtn.addEventListener("click", inputSubjectNumber);
 
 function inputSubjectNumber() {
-    const numSubjectsLabel = document.createElement("label");
-    numSubjectsLabel.setAttribute("for", "num-subjects");
-    numSubjectsLabel.textContent = "Enter number of subjects";
+  const htmlToInsert = `
+  <div class="input-container">
+    <div class="cancel"><i class="fa-solid fa-circle-xmark"></i></div>
+    <label for="num-subjects">Enter number of subjects</label>
+    <input type="text" id="num-subjects" />
+    <button type="button" class="btn btn-create-subjects">Next</button>
+  </div>
+  `;
 
-    const numSubjects = document.createElement("input");
-    numSubjects.setAttribute("type", "text");
-    numSubjects.id = "num-subjects";
+  insertInputContainer("beforeend", main, htmlToInsert);
 
-    const createSubBtn = document.createElement("button");
-    createSubBtn.setAttribute("type", "button");
-    createSubBtn.className = "btn btn-create-subjects";
-    createSubBtn.textContent = "Next";
-
-    const inputPanel = document.createElement("div");
-    inputPanel.className = "input-container";
-    inputPanel.append(numSubjectsLabel, numSubjects, createSubBtn);
-
-    main.appendChild(inputPanel);
-
-    setTimeout(() => { document.body.addEventListener("click", hideInputPanel); }, 10);
-}
-
-function hideInputPanel(e) {
-    const targetElement = e.target;
-
-    if (targetElement.classList.contains("input-container"))
-        return;
-    else if (targetElement.classList.contains("btn-create-subjects"))
-        createSubjects();
-    else if (targetElement.parentElement.classList.contains("input-container"))
-        return;
-    else
-        document.querySelector(".input-container").remove();
-
-    document.body.removeEventListener("click", hideInputPanel);
+  document
+    .querySelector(".btn-create-subjects")
+    .addEventListener("click", createSubjects);
 }
 
 function createSubjects() {
-    const inputPanel = document.querySelector(".input-container");
-    const numSubjects = document.getElementById("num-subjects");
+  let numSubjectsValue = document.getElementById("num-subjects").value;
 
-    // CHECK IF INPUT CONTAINS NON-NUMERIC CHARACTER(S)
-    const inputValArr = numSubjects.value.split('');
-    for (char of inputValArr) {
-        if (isNaN(char)) return;
-    }
+  // CHECK IF INPUT CONTAINS NON-NUMERIC CHARACTER(S) OR ITS EMPTY
+  if (numSubjectsValue === "" || isNaN(numSubjectsValue)) {
+    return;
+  }
 
-    notTrackingStatus.style.display = "none";
-    inputPanel.remove();
+  notTrackingStatus.style.display = "none";
 
-    const attendanceGrid = document.createElement("div");
-    attendanceGrid.className = "attendance-grid";
-    document.querySelector("main .container").appendChild(attendanceGrid);
+  document
+    .querySelector("main .container")
+    .insertAdjacentHTML("beforeend", '<div class="attendance-grid"></div>');
 
-    const numSubjectsVal = parseInt(numSubjects.value);
-    for (let i = 1; i <= numSubjectsVal; i++) {
-        const subject = document.createElement("div");
-        subject.className = `subject-${i}`;
+  numSubjectsValue = parseInt(numSubjectsValue);
+  attendanceArr.push(numSubjectsValue);
 
-        const details = document.createElement("div");
-        details.className = "details";
+  for (let i = 1; i <= numSubjectsValue; i++) {
+    const subject = `
+    <div class="subject-${i}">
+        <div class="details">
+            <h3 class="subject-name"></h3>
+            <div class="data-showcase">
+                <p class="attended"></p>
+                <p class="total"></p>
+            </div>
+        </div>
 
-        const subjectName = document.createElement("h3");
-        subjectName.className = "subject-name";
+        <div class="percentage">
+            <p class="num-percentage"></p>
+        </div>
+    </div>
+    `;
 
-        const dataShowcase = document.createElement("div");
-        dataShowcase.className = "data-showcase";
+    document
+      .querySelector(".attendance-grid")
+      .insertAdjacentHTML("beforeend", subject);
 
-        const numAttended = document.createElement("p");
-        numAttended.className = "attended";
+    document
+      .querySelector(`.subject-${i}`)
+      .addEventListener("click", editAttendance);
 
-        const numTotal = document.createElement("p");
-        numTotal.className = "total";
+    attendanceArr.push({
+      subjectName: undefined,
+      attendedClasses: undefined,
+      totalClasses: undefined,
+      percentage: undefined,
+    });
+  }
 
-        const percentage = document.createElement("div");
-        percentage.className = "percentage";
+  clearSubjectsBtn.style.display = "grid";
+  clearSubjectsBtn.addEventListener("click", clearSubjects);
 
-        const numPercentage = document.createElement("p");
-        numPercentage.className = "num-percentage";
-
-        dataShowcase.append(numAttended, numTotal);
-
-        details.append(subjectName, dataShowcase);
-
-        percentage.appendChild(numPercentage);
-
-        subject.append(details, percentage);
-
-        attendanceGrid.appendChild(subject);
-
-        subject.addEventListener("click", editAttendance);
-    }
+  document.querySelector(".input-container").remove();
 }
 
 function editAttendance(e) {
-    let currSubject = e.target;
+  const currSubject = e.target.closest('div[class|="subject"]');
+  const subjects = Array.from(currSubject.parentElement.children);
+  const subjectNumber = Number(
+    Array.from(currSubject.classList[0].split("-")[1])
+  );
 
-    // LOGIC TO ALWAYS KEEP THE TARGET HAVING CLASS "subject-*" 
-    // * REPRESENTS A NUMBER AS IN "subject-1"
-    let d = true;
-    while (d) {
-        let classArr = currSubject.className.split('-');
+  // REMOVE EVENT LISTENER FROM EACH SUBJECT
+  subjects.forEach((subject) => {
+    subject.removeEventListener("click", editAttendance);
+  });
 
-        if (classArr.length <= 1) {
-            currSubject = currSubject.parentElement;
-            continue;
-        }
+  const subjectNameElement = currSubject.children[0].children[0];
+  const attendedElement =
+    currSubject.children[0].children[0].nextElementSibling.children[0];
+  const totalElement =
+    currSubject.children[0].children[0].nextElementSibling.children[1];
+  const percentElement = currSubject.children[1].children[0];
 
-        for (c of classArr) {
-            if (!isNaN(c)) {
-                d = isNaN(c);
-                break;
-            }
-        }
+  const htmlToInsert = `
+  <div class="input-container">
+        <div class="cancel"><i class="fa-solid fa-circle-xmark"></i></div>
+        <input type="text" id="subject-name-input" placeholder="Enter subject name">
+        <div>
+            <label for="classes-attended">Enter number of classes attended</label>
+            <div class="attended-input-grp">
+                <button type="button" class="decrease"><i class="fa-solid fa-minus"></i></button>
+                <input type="number" id="classes-attended" min="0" value="0">
+                <button type="button" class="increase"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        </div>
+        <div>
+            <label for="classes-total">Enter number of total classes</label>
+            <div class="total-input-grp">
+                <button type="button" class="decrease"><i class="fa-solid fa-minus"></i></button>
+                <input type="number" id="classes-total" min="0" value="0">
+                <button type="button" class="increase"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        </div>
 
-        if (!d) break;
-        else currSubject = currSubject.parentElement;
+        <button class="btn btn-update">Update</button>
+    </div>
+  `;
+
+  insertInputContainer("beforeend", main, htmlToInsert, subjects);
+
+  document.getElementById("subject-name-input").value =
+    subjectNameElement.textContent;
+  if (attendedElement.innerText !== "" && totalElement.innerText === "") {
+    document.getElementById("classes-attended").value =
+      attendedElement.children[0].innerText;
+    document.getElementById("classes-total").value = totalElement.innerText;
+  } else if (
+    attendedElement.innerText === "" &&
+    totalElement.innerText !== ""
+  ) {
+    document.getElementById("classes-attended").value =
+      attendedElement.innerText;
+    document.getElementById("classes-total").value =
+      totalElement.children[0].innerText;
+  } else if (
+    attendedElement.innerText === "" &&
+    totalElement.innerText === ""
+  ) {
+    document.getElementById("classes-attended").value =
+      attendedElement.innerText;
+    document.getElementById("classes-total").value = totalElement.innerText;
+  } else {
+    document.getElementById("classes-attended").value =
+      attendedElement.children[0].innerText;
+    document.getElementById("classes-total").value =
+      totalElement.children[0].innerText;
+  }
+
+  Array.from(document.querySelectorAll(".decrease")).forEach((decrease) => {
+    decrease.addEventListener("click", () => {
+      const nextInput = decrease.nextElementSibling;
+      Number(nextInput.value) > 0
+        ? (nextInput.value = `${Number(nextInput.value) - 1}`)
+        : (nextInput.value = "0");
+    });
+  });
+
+  Array.from(document.querySelectorAll(".increase")).forEach((increase) => {
+    increase.addEventListener("click", () => {
+      const previousInput = increase.previousElementSibling;
+      previousInput.value = Number(previousInput.value) + 1;
+    });
+  });
+
+  // LOGIC FOR EDITING ATTENDANCE
+  document.querySelector(".btn-update").addEventListener("click", () => {
+    let subjectNameVal = document.getElementById("subject-name-input").value;
+    let attendedVal = document.getElementById("classes-attended").value;
+    let totalVal = document.getElementById("classes-total").value;
+
+    if (subjectNameVal === "" || attendedVal === "" || totalVal === "") {
+      return;
     }
 
-    const subjectNameElement = Array.from(currSubject.children[0].children)[0];
-    const attendedElement = Array.from(currSubject.children[0].children)[0].nextElementSibling.children[0];
-    const totalElement = Array.from(currSubject.children[0].children)[0].nextElementSibling.children[1];
-    const percentElement = Array.from(currSubject.children[1].children)[0];
-    // const subjectsArr = Array.from(document.querySelectorAll('.attendance-grid > div[class^="subject-"]'));
+    let percentageAttendance = Math.floor(
+      (parseInt(attendedVal) / parseInt(totalVal)) * 100
+    );
 
-    let inputPanelUpdate = document.createElement("div");
-    inputPanelUpdate.setAttribute("class", "input-container");
+    attendanceArr[subjectNumber].subjectName = subjectNameVal;
+    attendanceArr[subjectNumber].attendedClasses = parseInt(attendedVal);
+    attendanceArr[subjectNumber].totalClasses = parseInt(totalVal);
+    attendanceArr[subjectNumber].percentage = percentageAttendance;
 
-    inputPanelUpdate.innerHTML =
-        `<div class="cancel"><i class="fa-solid fa-circle-xmark"></i></div>
-    <input type="text" id="subject-name-input" placeholder="Enter subject name">
-    <div>
-        <label for="classes-attended">Enter number of classes attended</label>
-        <div class="attended-input-grp">
-            <button type="button" class="decrease"><i class="fa-solid fa-minus"></i></button>
-            <input type="number" id="classes-attended" min="0" value="0">
-            <button type="button" class="increase"><i class="fa-solid fa-plus"></i></button>
-        </div>
-    </div>
-    <div>
-        <label for="classes-total">Enter number of total classes</label>
-        <div class="total-input-grp">
-            <button type="button" class="decrease"><i class="fa-solid fa-minus"></i></button>
-            <input type="number" id="classes-total" min="0" value="0">
-            <button type="button" class="increase"><i class="fa-solid fa-plus"></i></button>
-        </div>
-    </div>
+    localStorage.setItem("attendance", JSON.stringify(attendanceArr));
 
-    <button class="btn btn-update">Update</button>`;
-
-
-    main.appendChild(inputPanelUpdate);
-
-    document.getElementById("subject-name-input").value = subjectNameElement.innerHTML;
-    if (attendedElement.innerText !== '' && totalElement.innerText === '') {
-        document.getElementById("classes-attended").value = attendedElement.children[0].innerText;
-        document.getElementById("classes-total").value = String(Number(totalElement.innerText));
-    } else if (attendedElement.innerText === '' && totalElement.innerText !== '') {
-        document.getElementById("classes-attended").value = String(Number(attendedElement.innerText));
-        document.getElementById("classes-total").value = totalElement.children[0].innerText;
-    } else if (attendedElement.innerText === '' && totalElement.innerText === '') {
-        document.getElementById("classes-attended").value = String(Number(attendedElement.innerText));
-        document.getElementById("classes-total").value = String(Number(totalElement.innerText));
+    if (percentageAttendance >= 75) {
+      Array.from(currSubject.children[1].children)[0].classList.remove(
+        "inadequate"
+      );
+      Array.from(currSubject.children[1].children)[0].classList.add("adequate");
     } else {
-        document.getElementById("classes-attended").value = attendedElement.children[0].innerText;
-        document.getElementById("classes-total").value = totalElement.children[0].innerText;
+      Array.from(currSubject.children[1].children)[0].classList.remove(
+        "adequate"
+      );
+      Array.from(currSubject.children[1].children)[0].classList.add(
+        "inadequate"
+      );
     }
 
+    subjectNameElement.innerHTML = subjectNameVal;
+    attendedElement.innerHTML = `Classes attended: <span>${attendedVal}</span>`;
+    totalElement.innerHTML = `Total classes: <span>${totalVal}</span>`;
+    percentElement.innerHTML = `${percentageAttendance}%`;
 
-    document.querySelector(".cancel").addEventListener("click", () => {
-        inputPanelUpdate.remove();
+    // ADD EVENT LISTENER TO SUBJECTS AGAIN
+    subjects.forEach((subject) => {
+      subject.addEventListener("click", editAttendance);
     });
 
-    Array.from(document.querySelectorAll(".decrease")).forEach(decrease => {
-        decrease.addEventListener("click", () => {
-            let nextInput = decrease.nextElementSibling;
-            parseInt(nextInput.value) > 0 ? nextInput.value = `${parseInt(nextInput.value) - 1}` : nextInput.value = '0';
-        });
-    });
+    document.querySelector(".input-container").remove();
+  });
+}
 
-    Array.from(document.querySelectorAll(".increase")).forEach(increase => {
-        increase.addEventListener("click", () => {
-            let previousInput = increase.previousElementSibling;
-            previousInput.value = `${parseInt(previousInput.value) + 1}`;
-        });
-    });
+function insertInputContainer(
+  whereToInsert,
+  element,
+  whatToInsert,
+  subjects = null
+) {
+  element.insertAdjacentHTML(whereToInsert, whatToInsert);
 
-    // LOGIC FOR EDITING ATTENDANCE
-    document.querySelector(".btn-update").addEventListener("click", () => {
-        let subjectNameVal = document.getElementById("subject-name-input").value;
-        let attendedVal = document.getElementById("classes-attended").value;
-        let totalVal = document.getElementById("classes-total").value;
-        let percentageAttendance = Math.floor(parseInt(attendedVal) / parseInt(totalVal) * 100);
+  document.querySelector(".cancel").addEventListener("click", (e) => {
+    e.target.closest(".input-container").remove();
 
-        if (percentageAttendance >= 75) {
-            Array.from(currSubject.children[1].children)[0].classList.remove("inadequate")
-            Array.from(currSubject.children[1].children)[0].classList.add("adequate")
-        }
-        else {
-            Array.from(currSubject.children[1].children)[0].classList.remove("adequate");
-            Array.from(currSubject.children[1].children)[0].classList.add("inadequate");
-        }
+    if (subjects) {
+      subjects.forEach((subject) => {
+        subject.addEventListener("click", editAttendance);
+      });
+    }
+  });
+}
 
-        subjectNameElement.innerHTML = subjectNameVal;
-        attendedElement.innerHTML = `Classes attended: <span>${attendedVal}</span>`;
-        totalElement.innerHTML = `Total classes: <span>${totalVal}</span>`;
-        percentElement.innerHTML = `${percentageAttendance}%`;
-
-        inputPanelUpdate.remove();
-    });
+function clearSubjects(e) {
+  if (e.target.classList.contains("btn")) {
+    localStorage.removeItem("attendance");
+    location.reload();
+  }
 }
